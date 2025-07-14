@@ -230,7 +230,7 @@ ip_input(const uint8_t *data, size_t len, struct net_device *dev)
         return;
     }
 
-    if (cksum16((uint16_t *)data, hlen, 0) != 0) {
+    if (cksum16((uint16_t *)hdr, hlen, 0) != 0) {
         errorf("checksum error");
         return;
     }
@@ -261,6 +261,7 @@ ip_input(const uint8_t *data, size_t len, struct net_device *dev)
     struct ip_protocol *proto;
     for (proto = protocols; proto; proto = proto->next) {
         if (proto->type == hdr->protocol) {
+            // debugf("protocol=%u", hdr->protocol);
             proto->handler((uint8_t *)hdr + hlen, total - hlen, hdr->src, hdr->dst, iface);
             return;
         }
@@ -295,24 +296,20 @@ ip_output_core(struct ip_iface *iface, uint8_t protocol, const uint8_t *data, si
     char addr[IP_ADDR_STR_LEN];
 
     hdr = (struct ip_hdr *)buf;
+
     /* Exercise 8-3 */
-    // IPヘッダの各フィールドに値を設定
-    // IPヘッダの長さはIP_HDR_SIZE_MIN固定
-    // TOS = 0, TTL = 255
-    // チェックサムの計算結果はバイトオーダーに変換せずにそのまま設定
-    // チェックサムの計算の際、あらかじめチェックサムフィールドに0を設定する
     hlen = IP_HDR_SIZE_MIN;
     hdr->vhl = (IP_VERSION_IPV4 << 4) | (hlen >> 2);
     hdr->tos = 0;
     total = hlen + len;
-    hdr->total = htons(total);
-    hdr->id = htons(id);
-    hdr->offset = htons(offset);
+    hdr->total = hton16(total);
+    hdr->id = hton16(id);
+    hdr->offset = hton16(offset);
     hdr->ttl = 255;
     hdr->protocol = protocol;
-    hdr->sum = cksum16((uint16_t *)hdr, hlen, 0);
     hdr->src = src;
     hdr->dst = dst;
+    hdr->sum = cksum16((uint16_t *)hdr, hlen, 0);
 
     memcpy(buf + hlen, data, len);
 
@@ -360,7 +357,7 @@ ip_output(uint8_t protocol, const uint8_t *data, size_t len, ip_addr_t src, ip_a
         }
     }
     if (NET_IFACE(iface)->dev->mtu < IP_HDR_SIZE_MIN + len) {
-        error("too long, dev=%s, mtu=%u < %zu", NET_IFACE(iface)->dev->name, NET_IFACE(iface)->dev->mtu, IP_HDR_SIZE_MIN + len);
+        errorf("too long, dev=%s, mtu=%u < %zu", NET_IFACE(iface)->dev->name, NET_IFACE(iface)->dev->mtu, IP_HDR_SIZE_MIN + len);
         return -1;
     }
     id = ip_generate_id();
