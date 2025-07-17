@@ -307,8 +307,10 @@ ip_output_core(struct ip_iface *iface, uint8_t protocol, const uint8_t *data, si
     hdr->offset = hton16(offset);
     hdr->ttl = 255;
     hdr->protocol = protocol;
+    hdr->sum = 0;
     hdr->src = src;
     hdr->dst = dst;
+    
     hdr->sum = cksum16((uint16_t *)hdr, hlen, 0);
 
     memcpy(buf + hlen, data, len);
