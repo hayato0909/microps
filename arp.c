@@ -101,7 +101,7 @@ arp_cache_delete(struct arp_cache *cache)
     /* Exercise 14-1 */
     cache->state = ARP_CACHE_STATE_FREE;
     cache->pa = 0;
-    memset(cache->ha, 0, sizeof(cache->ha));
+    memset(cache->ha, 0, ETHER_ADDR_LEN);
     gettimeofday(&cache->timestamp, NULL);
 
     debugf("UPDATE: pa=%s, ha=%s", ip_addr_ntop(&cache->pa, addr1, sizeof(addr1)), ether_addr_ntop(cache->ha, addr2, sizeof(addr2)));
@@ -132,7 +132,7 @@ arp_cache_select(ip_addr_t pa)
     struct arp_cache *entry;
 
     for (entry = caches; entry < tailof(caches); entry++) {
-        if (entry->state == ARP_CACHE_STATE_RESOLVED && entry->pa == pa) {
+        if (entry->state != ARP_CACHE_STATE_FREE && entry->pa == pa) {
             return entry;
         }
     }
