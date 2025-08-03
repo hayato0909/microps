@@ -91,6 +91,13 @@ extern int
 net_softirq_handler(void);
 
 extern int
+net_event_register(void (*handler)(void *arg), void *arg);
+extern int
+net_event_handler(void);
+extern void
+net_raise_event(void);
+
+extern int
 net_run(void);
 extern void
 net_shutdown(void);
