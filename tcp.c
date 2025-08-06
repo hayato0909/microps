@@ -240,10 +240,10 @@ tcp_output_segment(uint32_t seq, uint32_t ack, uint8_t flg, uint16_t wnd, uint8_
         ip_endpoint_ntop(local, ep1, sizeof(ep1)),
         ip_endpoint_ntop(foreign, ep2, sizeof(ep2)),
         total, len);
-    tcp_dump(buf, total);
+    tcp_dump((uint8_t *)hdr, total);
     
     /* Exercise 23-2 */
-    if (ip_output(buf, total, IP_PROTOCOL_TCP, local->addr, foreign->addr) == -1) {
+    if (ip_output(IP_PROTOCOL_TCP, (uint8_t *)hdr, total, local->addr, foreign->addr) == -1) {
         errorf("ip_output() failure");
         return -1;
     }
